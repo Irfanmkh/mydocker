@@ -1,0 +1,65 @@
+services:
+    # 1. Server Aplikasi (PHP-FPM)
+    app:
+        build: .
+        container_name: loventa_app
+        user: "1000:1000"
+        restart: always
+        ports:
+            - "5173:5173"
+        volumes:
+            - .:/var/www
+            - /root/.cache
+        working_dir: /var/www
+        environment:
+            - PLAYWRIGHT_BROWSERS_PATH=/var/www/.cache/ms-playwright
+        depends_on:
+            - db
+
+    # 2. Web Server (Caddy) - Otomatis HTTPS
+    webserver:
+        image: caddy:alpine
+        container_name: loventa_web
+        restart: always
+        ports:
+            - "80:80"
+            - "443:443"
+        volumes:
+            - .:/var/www
+            - ./Caddyfile:/etc/caddy/Caddyfile # File konfigurasi Caddy
+            - caddy_data:/data # Tempat simpan sertifikat SSL otomatis
+            - caddy_config:/config
+        depends_on:
+            - app
+
+    # 3. Database Server (MySQL)
+    db:
+        image: mysql:8.0
+        container_name: loventa_db
+        restart: always
+        environment:
+            MYSQL_ROOT_PASSWORD: rootpassword
+            MYSQL_DATABASE: loventa_v2
+            MYSQL_USER: irfan
+            MYSQL_PASSWORD: root
+        ports:
+            - "3306:3306"
+        volumes:
+            - mysql_data:/var/lib/mysql
+
+    # 5. Database GUI (phpMyAdmin)
+    phpmyadmin:
+        image: phpmyadmin:latest
+        container_name: loventa_pma
+        restart: always
+        depends_on:
+            - db
+        ports:
+            - "8080:80"
+        environment:
+            PMA_HOST: db
+
+volumes:
+    mysql_data:
+    caddy_data:
+    caddy_config:

@@ -1,0 +1,8 @@
+localhost {
+    root * /var/www/public
+    encode gzip
+    file_server
+
+    # Mengarahkan file PHP langsung ke container 'app' (PHP-FPM)
+    php_fastcgi app:9000
+}
